@@ -16,15 +16,17 @@ void main() {
     printk("Zephyr main() start");
     
     printk("Initializing JerryScript thread");
-    k_tid_t my_tid = k_thread_create(&jz_thread_data, jz_stack_area,
+    k_tid_t js_tid = k_thread_create(&jz_thread_data, jz_stack_area,
                                  K_THREAD_STACK_SIZEOF(jz_stack_area),
                                  jz_main,
                                  NULL, NULL, NULL,
                                  JS_PRIORITY, 0, K_NO_WAIT);
 
+    printk("js thread id: %d", js_tid)
+
     while(1) {
         //blink led?
-        printk('Main thread alive...');
-        k_sleep(100);
+        printk("Main thread alive...");
+        k_sleep(K_MSEC(100));
     }
 }

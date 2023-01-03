@@ -57,7 +57,7 @@ void jz_register_handlers()
 {
 
     jerryx_register_global ("print", jerryx_handler_print);
-    jerryx_register_global("fs_init", fs_init_handler);
+    //jerryx_register_global("fs_init", fs_init_handler);
 
 }
 
@@ -99,7 +99,7 @@ jz_exec_queue_num_entries (jz_exec_queue *queue)
 void
 jz_exec_queue_push (jz_exec_queue *queue, jerry_value_t new_value)
 {
-    queue->head++
+    queue->head++;
     if(queue->head == queue->end)
     {
         queue->head = queue->start;
@@ -115,11 +115,12 @@ jz_exec_queue_push (jz_exec_queue *queue, jerry_value_t new_value)
 jerry_value_t
 jz_exec_queue_pop (jz_exec_queue *queue)
 {
-    if(queue->head == queue->tail) {
+    if(queue->head == queue->tail)
+    {
         //fatal: underflow
         printk("jz_exec_queue_pop fatal error: underflow");
     }
-    tLastValue = *(queue->tail);
+    jerry_value_t tLastValue = *(queue->tail);
     queue->tail++;
     if(queue->tail == queue->end)
     {
@@ -152,7 +153,7 @@ jz_timeout_update(  jz_timeout_list_entry *timeout_list,
 }
 
 void
-jz_timeout_enqueue_exec (   jz_timeout_list *timeout_list,
+jz_timeout_enqueue_exec (   jz_timeout_list_entry *timeout_list,
                             jz_exec_queue *queue)
 {
     for (int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
@@ -174,7 +175,7 @@ jz_timeout_enqueue_exec (   jz_timeout_list *timeout_list,
 }
 
 void
-jz_timeout_new (jz_timeout_list *timeout_list,
+jz_timeout_new (jz_timeout_list_entry *timeout_list,
                 uint32_t ms_time,
                 utils_flags_t options,
                 jerry_value_t callback)
@@ -216,7 +217,7 @@ void jz_main (void *, void *, void *)
         }
         else
         {
-            k_sleep(10);
+            k_sleep(K_MSEC(10));
         }
     }
 	jerry_cleanup();
