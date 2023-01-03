@@ -1,0 +1,18 @@
+# WAVESHARE NRF52840 Eval Kit board configuration
+
+# Copyright (c) 2022 Igor José Langer
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_WAVESHARE_NRF52840_EVAL_KIT
+
+config BOARD_ENABLE_DCDC
+	bool "Enable DCDC mode"
+	select SOC_DCDC_NRF52X
+	default y
+
+config BOARD_ENABLE_DCDC_HV
+	bool "Enable High Voltage DCDC converter"
+	select SOC_DCDC_NRF52X_HV
+	default y
+
+endif # BOARD_WAVESHARE_NRF52840_EVAL_KIT

@@ -1,0 +1,8 @@
+# Waveshare nRF52840 Eval Kit board configuration
+
+# Copyright (c) 2022 Igor José Langer
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_WAVESHARE_NRF52840_EVAL_KIT
+	bool "Waveshare nRF52840 Eval Kit"
+	depends on SOC_NRF52840_QIAA

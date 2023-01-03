@@ -1,0 +1,30 @@
+# Copyright (c) 2022 Igor José Langer
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: waveshare_nrf52840_eval_kit
+name: waveshare_nrf52840_eval_kit
+type: mcu
+arch: arm
+ram: 256
+flash: 1024
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - adc
+  - arduino_gpio
+  - arduino_i2c
+  - arduino_spi
+  - ble
+  - counter
+  - gpio
+  - i2c
+  - i2s
+  - ieee802154
+  - pwm
+  - spi
+  - usb_cdc
+  - usb_device
+  - watchdog
+  - netif:openthread
