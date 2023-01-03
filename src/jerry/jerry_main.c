@@ -63,7 +63,7 @@ void jz_register_handlers()
 
 // ----- exec queue management
 
-typedef struct {
+typedef struct jz_exec_queue_st {
     jerry_value_t *start;
     jerry_value_t *head;
     jerry_value_t *tail;
@@ -96,6 +96,21 @@ jz_exec_queue_num_entries (jz_exec_queue *queue)
     return tNumEntries;
 }
 
+int
+jz_exec_queue_free_space (jz_exec_queue *queue)
+{
+    int tFreeSpace = queue->end - queue->start;
+    if (queue->head > queue->tail)
+    {
+        tFreeSpace = queue->end - queue->head + queue->tail - queue->start;
+    } else 
+    if (queue->head < queue->tail)
+    {
+        tFreeSpace = queue->tail - queue->head;
+    }
+    return tFreeSpace;
+}
+
 void
 jz_exec_queue_push (jz_exec_queue *queue, jerry_value_t new_value)
 {
@@ -109,7 +124,7 @@ jz_exec_queue_push (jz_exec_queue *queue, jerry_value_t new_value)
         //fatal: overflow
         printk("jz_exec_queue_push fatal error: overflow");
     }
-    *(queue->head) = new_value
+    *(queue->head) = new_value;
 }
 
 jerry_value_t
@@ -131,7 +146,7 @@ jz_exec_queue_pop (jz_exec_queue *queue)
 
 //----- timeout list management
 
-typedef struct  {
+typedef struct  jz_timeout_list_entry_st {
     jerry_value_t callback;
     uint32_t elapsed;
     uint32_t trigger;
@@ -154,20 +169,20 @@ jz_timeout_update(  jz_timeout_list_entry *timeout_list,
 
 void
 jz_timeout_enqueue_exec (   jz_timeout_list_entry *timeout_list,
-                            jz_exec_queue *queue)
+                            jz_exec_queue *exec_queue)
 {
     for (int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
     {
-        if(jz_exec_queue_free_space() == 0)
+        if(jz_exec_queue_free_space(exec_queue) == 0)
         {
             break;
         }
         if (timeout_list[i].elapsed >= timeout_list[i].trigger)
         {
-            jz_exec_queue_push (queue, timeout_list[i].callback)
+            jz_exec_queue_push (exec_queue, timeout_list[i].callback);
             if(utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_PERIODIC) == 0)
             {
-                utils_clear_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED);
+                utils_clear_flag(&timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED);
             }
             timeout_list[i].elapsed = 0;
         }
@@ -177,12 +192,12 @@ jz_timeout_enqueue_exec (   jz_timeout_list_entry *timeout_list,
 void
 jz_timeout_new (jz_timeout_list_entry *timeout_list,
                 uint32_t ms_time,
-                utils_flags_t options,
+                utils_flag_t options,
                 jerry_value_t callback)
 {
     for(int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
     {
-        if (utils_check_flag(timeout_list[i].flags, JZ_TIMEOUT_OPTION_ENABLED) == 0)
+        if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED) == 0)
         {
             timeout_list[i].elapsed = 0;
             timeout_list[i].trigger = ms_time;
@@ -197,23 +212,29 @@ jz_timeout_new (jz_timeout_list_entry *timeout_list,
 
 //-----
 
-void jz_main (void *, void *, void *)
+void jz_main (void *v1, void *v2, void *v3)
 {
     jz_timeout_list_entry timeout_list[CONFIG_JZ_TIMEOUT_LIST_SIZE];
-    jerry_value_t exec_queue[CONFIG_JZ_EXEC_QUEUE_SIZE];
+    jerry_value_t exec_queue_buffer[CONFIG_JZ_EXEC_QUEUE_SIZE];
+    jz_exec_queue exec_queue;
+
+    jz_exec_queue_init(&exec_queue, exec_queue_buffer, CONFIG_JZ_EXEC_QUEUE_SIZE);
+
     jerry_init(JERRY_INIT_EMPTY);
     jz_register_handlers();
     jz_load_user_code();
     while (1)
     {
         jz_timeout_update(timeout_list, 10);
-        jz_timeout_enqueue_exec(timeout_queue, exec_queue);
-        if (jz_exec_queue_num_entries(exec_queue) > 0)
+        jz_timeout_enqueue_exec(timeout_list, &exec_queue);
+        if (jz_exec_queue_num_entries(&exec_queue) > 0)
         {
-            jerry_value_t tNextCall = jz_exec_queue_pop(exec_queue);
-            jerry_value_t tRetValue = jerry_call(tNextCall);
+            jerry_value_t undefined_value = jerry_undefined ();
+            jerry_value_t tNextCall = jz_exec_queue_pop(&exec_queue);
+            jerry_value_t tRetValue = jerry_call(tNextCall, undefined_value, NULL, 0);
             jerry_value_free(tRetValue);
             jerry_value_free(tNextCall);
+            jerry_value_free (undefined_value);
         }
         else
         {

@@ -22,7 +22,7 @@ void main() {
                                  NULL, NULL, NULL,
                                  JS_PRIORITY, 0, K_NO_WAIT);
 
-    printk("js thread id: %d", js_tid)
+    printk("js thread id: %d", js_tid);
 
     while(1) {
         //blink led?
