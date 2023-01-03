@@ -1,0 +1,49 @@
+
+config USB_DEVICE_PID
+	default 0x0008
+
+config APP_WIPE_STORAGE
+	bool "Option to clear the flash area before mounting"
+	help
+	  Use this to force an existing file system to be created.
+
+choice
+	prompt "Storage and file system type used by the application"
+	default APP_MSC_STORAGE_NONE
+	help
+	  Specify the type of storage and file system.
+
+config APP_MSC_STORAGE_NONE
+	bool "No block device"
+	imply DISK_DRIVER_SDMMC
+
+config APP_MSC_STORAGE_FLASH_FATFS
+	bool "Use FLASH disk and FAT file system"
+	imply DISK_DRIVER_FLASH
+	imply FILE_SYSTEM
+	imply FAT_FILESYSTEM_ELM
+
+config APP_MSC_STORAGE_FLASH_LITTLEFS
+	bool "Use FLASH disk and LittleFS"
+	imply DISK_DRIVER_FLASH
+	imply FILE_SYSTEM
+	imply FILE_SYSTEM_LITTLEFS
+
+config APP_MSC_STORAGE_SDCARD
+	bool "Use SDHC and FAT file system"
+	# imply DISK_DRIVER_SDMMC
+	# imply FILE_SYSTEM
+	# imply FAT_FILESYSTEM_ELM
+	select SDHC
+	select SPI_SDHC
+	select SDMMC_SUBSYS
+	select DISK_DRIVER_SDMMC
+
+endchoice
+
+config MASS_STORAGE_DISK_NAME
+	default "NAND" if DISK_DRIVER_FLASH
+	default "SD" if DISK_DRIVER_SDMMC
+
+source "Kconfig.zephyr"
+
