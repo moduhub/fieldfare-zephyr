@@ -26,7 +26,7 @@ void main() {
 
     while(1) {
         //blink led?
-        printk("Main thread alive...");
-        k_sleep(K_MSEC(100));
+        printk("Main thread alive...\n");
+        k_sleep(K_MSEC(1000));
     }
 }

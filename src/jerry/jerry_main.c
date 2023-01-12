@@ -1,33 +1,36 @@
 #include "jerry_main.h"
+#include "jerry_events.h"
+#include "jerry_timeout.h"
 #include "handlers.h"
-
-#include <stdint.h>
 
 #include <zephyr/zephyr.h>
 #include "jerryscript.h"
 #include "utils.h"
 
+jz_timeout_list_entry *timeout_list_ptr;
 
-#ifndef CONFIG_JZ_TIMEOUT_LIST_SIZE
-#define CONFIG_JZ_TIMEOUT_LIST_SIZE 10
-#endif
-
-#ifndef CONFIG_JZ_EXEC_QUEUE_SIZE
-#define CONFIG_JZ_EXEC_QUEUE_SIZE 10
-#endif
-
-#define JZ_TIMEOUT_OPTION_ENABLED   0x01
-#define JZ_TIMEOUT_OPTION_PERIODIC  0x02
-
-
-int jz_load_user_code (void) 
+int jz_load_user_code (void)
 {
-	const jerry_char_t script[] = "print('This is from the Jerry Thread!'); \
-        var a = 5; \
-		print('variable = ' + a); \
-		var b = 10; \
-		print('This is double = ' + b); \
-		print('It works!'); \
+	// const jerry_char_t script[] = "print('Hello from JavaScript');\
+    //     var count = 0;\
+    //     while (count < 3) {\
+    //         setTimeout(() => {\
+    //             print('timeout ' + count + ' called');\
+    //         }, count*1000);\
+    //         count++;\
+    //     }\
+	// 	print('script ended with count=' + count + '\n');\
+	// ";
+
+    const jerry_char_t script[] = "print('Hello from JavaScript');\
+        var count = 0;\
+        setTimeout(() => {\
+            print('timeout!');\
+        }, 1000);\
+        while (count < 3) {\
+            print('js count: ' + count);\
+            count++;\
+        }\
 	";
 
 	const jerry_length_t script_size = sizeof (script) - 1;
@@ -53,172 +56,46 @@ int jz_load_user_code (void)
 	return 0;
 }
 
+jerry_value_t
+jz_timeout_handler( const jerry_call_info_t *call_info_p,
+				    const jerry_value_t arguments[],
+				    const jerry_length_t arguments_count)
+{	
+	if(arguments_count == 2) {
+        jerry_value_t tCallback = arguments[0];
+        jerry_value_t tTime = arguments[1];
+        uint32_t cTime = jerry_value_as_uint32 (tTime);
+
+        jz_timeout_new(timeout_list_ptr, cTime, 0, tCallback);
+       
+        jerry_value_free(tTime);
+        
+    } else {
+        //throw
+    }
+
+	return jerry_undefined();
+}
+
 void jz_register_handlers()
 {
 
     jerryx_register_global ("print", jerryx_handler_print);
     //jerryx_register_global("fs_init", fs_init_handler);
 
+    jerryx_register_global ("setTimeout", jz_timeout_handler);
+
 }
 
-// ----- exec queue management
-
-typedef struct jz_exec_queue_st {
-    jerry_value_t *start;
-    jerry_value_t *head;
-    jerry_value_t *tail;
-    jerry_value_t *end;
-} jz_exec_queue;
-
-void
-jz_exec_queue_init( jz_exec_queue *queue,
-                    jerry_value_t *queue_buffer,
-                    unsigned int buffer_size)
-{
-    queue->start = queue_buffer;
-    queue->head = queue_buffer;
-    queue->tail = queue_buffer;
-    queue->end = queue_buffer + buffer_size;
-}
-
-int
-jz_exec_queue_num_entries (jz_exec_queue *queue)
-{
-    int tNumEntries = 0;
-    if (queue->head > queue->tail)
-    {
-        tNumEntries = queue->head - queue->tail;
-    } else 
-    if (queue->head < queue->tail)
-    {
-        tNumEntries = queue->end - queue->head + queue->tail - queue->start;
-    }
-    return tNumEntries;
-}
-
-int
-jz_exec_queue_free_space (jz_exec_queue *queue)
-{
-    int tFreeSpace = queue->end - queue->start;
-    if (queue->head > queue->tail)
-    {
-        tFreeSpace = queue->end - queue->head + queue->tail - queue->start;
-    } else 
-    if (queue->head < queue->tail)
-    {
-        tFreeSpace = queue->tail - queue->head;
-    }
-    return tFreeSpace;
-}
-
-void
-jz_exec_queue_push (jz_exec_queue *queue, jerry_value_t new_value)
-{
-    queue->head++;
-    if(queue->head == queue->end)
-    {
-        queue->head = queue->start;
-    }
-    if(queue->head == queue->tail)
-    {
-        //fatal: overflow
-        printk("jz_exec_queue_push fatal error: overflow");
-    }
-    *(queue->head) = new_value;
-}
-
-jerry_value_t
-jz_exec_queue_pop (jz_exec_queue *queue)
-{
-    if(queue->head == queue->tail)
-    {
-        //fatal: underflow
-        printk("jz_exec_queue_pop fatal error: underflow");
-    }
-    jerry_value_t tLastValue = *(queue->tail);
-    queue->tail++;
-    if(queue->tail == queue->end)
-    {
-        queue->tail = queue->start;
-    }
-    return tLastValue;
-}
-
-//----- timeout list management
-
-typedef struct  jz_timeout_list_entry_st {
-    jerry_value_t callback;
-    uint32_t elapsed;
-    uint32_t trigger;
-    utils_flag_t options;
-} jz_timeout_list_entry;
-
-void
-jz_timeout_update(  jz_timeout_list_entry *timeout_list,
-                    int elapsed)
-{
-    for(int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
-    {
-        if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED)
-        && timeout_list[i].elapsed < timeout_list[i].trigger)
-        {
-            timeout_list[i].elapsed += elapsed;
-        }
-    }
-}
-
-void
-jz_timeout_enqueue_exec (   jz_timeout_list_entry *timeout_list,
-                            jz_exec_queue *exec_queue)
-{
-    for (int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
-    {
-        if(jz_exec_queue_free_space(exec_queue) == 0)
-        {
-            break;
-        }
-        if (timeout_list[i].elapsed >= timeout_list[i].trigger)
-        {
-            jz_exec_queue_push (exec_queue, timeout_list[i].callback);
-            if(utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_PERIODIC) == 0)
-            {
-                utils_clear_flag(&timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED);
-            }
-            timeout_list[i].elapsed = 0;
-        }
-    }
-}
-
-void
-jz_timeout_new (jz_timeout_list_entry *timeout_list,
-                uint32_t ms_time,
-                utils_flag_t options,
-                jerry_value_t callback)
-{
-    for(int i=0; i<CONFIG_JZ_TIMEOUT_LIST_SIZE; i++)
-    {
-        if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED) == 0)
-        {
-            timeout_list[i].elapsed = 0;
-            timeout_list[i].trigger = ms_time;
-            timeout_list[i].callback = callback;
-            timeout_list[i].options = callback | JZ_TIMEOUT_OPTION_ENABLED;
-            return;
-        }
-    } 
-    //fatal: no free slots
-    printk("jz_timeout_new fatal error: no free slots");
-}
-
-//-----
 
 void jz_main (void *v1, void *v2, void *v3)
 {
     jz_timeout_list_entry timeout_list[CONFIG_JZ_TIMEOUT_LIST_SIZE];
-    jerry_value_t exec_queue_buffer[CONFIG_JZ_EXEC_QUEUE_SIZE];
-    jz_exec_queue exec_queue;
+    timeout_list_ptr = timeout_list;
+    jerry_value_t event_queue_buffer[CONFIG_JZ_EVENT_QUEUE_SIZE];
+    jz_event_queue event_queue;
 
-    jz_exec_queue_init(&exec_queue, exec_queue_buffer, CONFIG_JZ_EXEC_QUEUE_SIZE);
+    jz_event_queue_init(&event_queue, event_queue_buffer, CONFIG_JZ_EVENT_QUEUE_SIZE);
 
     jerry_init(JERRY_INIT_EMPTY);
     jz_register_handlers();
@@ -226,19 +103,22 @@ void jz_main (void *v1, void *v2, void *v3)
     while (1)
     {
         jz_timeout_update(timeout_list, 10);
-        jz_timeout_enqueue_exec(timeout_list, &exec_queue);
-        if (jz_exec_queue_num_entries(&exec_queue) > 0)
+        jz_generate_timeout_events(timeout_list, &event_queue);
+        if (jz_event_queue_num_entries(&event_queue) > 0)
         {
+            printk(">>exec queue start\n");
             jerry_value_t undefined_value = jerry_undefined ();
-            jerry_value_t tNextCall = jz_exec_queue_pop(&exec_queue);
+            jerry_value_t tNextCall = jz_event_queue_pop(&event_queue);
             jerry_value_t tRetValue = jerry_call(tNextCall, undefined_value, NULL, 0);
             jerry_value_free(tRetValue);
             jerry_value_free(tNextCall);
             jerry_value_free (undefined_value);
+            printk(">>exec queue end\n");
         }
         else
         {
-            k_sleep(K_MSEC(10));
+            printk("js thread idle...\n");
+            k_sleep(K_MSEC(100));
         }
     }
 	jerry_cleanup();
