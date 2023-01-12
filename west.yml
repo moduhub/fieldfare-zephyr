@@ -1,7 +1,7 @@
 manifest:
 
   self:
-    path: jzcore
+    path: fieldfare-zephyr
   
   remotes:
     - name: zephyrproject-rtos

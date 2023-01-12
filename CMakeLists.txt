@@ -4,7 +4,7 @@ set(BOARD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
-project(jzcore)
+project(fieldfare-zephyr)
 
 add_subdirectory(src)
 
