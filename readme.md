@@ -1,4 +1,4 @@
 
-# JerryScript Zephyr core
+# Fieldfare Zephyr module
 
-This is the firmware for the Jerry Zephyr core module "jzcore", an nRF52840 based hardware module capable of running JavaScript code based on the JerryScript machine. The module is specially suited to run the Fieldfare backend library, implementing basic filesystem and cryptographic functions.
+This Zephyr module enables running the [Fieldfare](https://github.com/moduhub/fieldfare) backend framework on any Zephyr supported microcontroller by using the JerryScript engine and Zephyr's filesystem and crypto drivers. Currently, the only microcontroller where the system is being tested is the nRF52840.
