@@ -1,6 +1,13 @@
 #include "jerry_timeout.h"
-
 #include <zephyr/zephyr.h>
+#include <string.h>
+
+
+void
+jz_timeout_init(jz_timeout_list_entry *timeout_list)
+{
+    memset(timeout_list, 0, sizeof(jz_timeout_list_entry) * CONFIG_JZ_TIMEOUT_LIST_SIZE);
+}
 
 void
 jz_timeout_new (jz_timeout_list_entry *timeout_list,

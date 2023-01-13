@@ -21,6 +21,9 @@ typedef struct  jz_timeout_list_entry_st {
 } jz_timeout_list_entry;
 
 void
+jz_timeout_init(jz_timeout_list_entry *timeout_list);
+
+void
 jz_timeout_new (jz_timeout_list_entry *timeout_list,
                 uint32_t ms_time,
                 utils_flag_t options,

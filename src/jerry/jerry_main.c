@@ -66,7 +66,7 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
         jerry_value_t tTime = arguments[1];
         uint32_t cTime = jerry_value_as_uint32 (tTime);
         jz_timeout_new(timeout_list_ptr, cTime, 0, tCallback);
-        jerry_value_free(tTime);
+        jerry_value_free(tTime);        
     } else {
         //throw
     }
@@ -88,9 +88,11 @@ void jz_register_handlers()
 void jz_main (void *v1, void *v2, void *v3)
 {
     jz_timeout_list_entry timeout_list[CONFIG_JZ_TIMEOUT_LIST_SIZE];
-    timeout_list_ptr = timeout_list;
     jerry_value_t event_queue_buffer[CONFIG_JZ_EVENT_QUEUE_SIZE];
     jz_event_queue event_queue;
+
+    jz_timeout_init(timeout_list);
+    timeout_list_ptr = timeout_list;
 
     jz_event_queue_init(&event_queue, event_queue_buffer, CONFIG_JZ_EVENT_QUEUE_SIZE);
 
