@@ -12,6 +12,7 @@ jz_timeout_new (jz_timeout_list_entry *timeout_list,
     {
         if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED) == 0)
         {
+            printk("New timeout created: callback=%d ms_time=%d\n", callback, ms_time);
             timeout_list[i].elapsed = 0;
             timeout_list[i].trigger = ms_time;
             timeout_list[i].callback = callback;

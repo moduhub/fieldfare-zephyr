@@ -65,11 +65,8 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
         jerry_value_t tCallback = arguments[0];
         jerry_value_t tTime = arguments[1];
         uint32_t cTime = jerry_value_as_uint32 (tTime);
-
         jz_timeout_new(timeout_list_ptr, cTime, 0, tCallback);
-       
         jerry_value_free(tTime);
-        
     } else {
         //throw
     }
@@ -106,14 +103,14 @@ void jz_main (void *v1, void *v2, void *v3)
         jz_generate_timeout_events(timeout_list, &event_queue);
         if (jz_event_queue_num_entries(&event_queue) > 0)
         {
-            printk(">>exec queue start\n");
-            jerry_value_t undefined_value = jerry_undefined ();
+            printk(">>event queue pop\n");
             jerry_value_t tNextCall = jz_event_queue_pop(&event_queue);
-            jerry_value_t tRetValue = jerry_call(tNextCall, undefined_value, NULL, 0);
+            printk(">>event call: %d\n", tNextCall);
+            jerry_value_t tRetValue = jerry_call(tNextCall, jerry_undefined(), NULL, 0);
+            printk(">>free values\n");
             jerry_value_free(tRetValue);
             jerry_value_free(tNextCall);
-            jerry_value_free (undefined_value);
-            printk(">>exec queue end\n");
+            printk(">>event end\n");
         }
         else
         {

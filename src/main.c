@@ -13,16 +13,16 @@ K_THREAD_STACK_DEFINE(jz_stack_area, JS_STACK_SIZE);
 struct k_thread jz_thread_data;
 
 void main() {
-    printk("Zephyr main() start");
+    printk("Zephyr main() start\n");
     
-    printk("Initializing JerryScript thread");
+    printk("Initializing JerryScript thread\n");
     k_tid_t js_tid = k_thread_create(&jz_thread_data, jz_stack_area,
                                  K_THREAD_STACK_SIZEOF(jz_stack_area),
                                  jz_main,
                                  NULL, NULL, NULL,
                                  JS_PRIORITY, 0, K_NO_WAIT);
 
-    printk("js thread id: %d", js_tid);
+    printk("js thread id: %d\n", js_tid);
 
     while(1) {
         //blink led?
