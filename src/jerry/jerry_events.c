@@ -47,6 +47,7 @@ jz_event_queue_free_space (jz_event_queue *queue)
 void
 jz_event_queue_push (jz_event_queue *queue, jerry_value_t new_value)
 {
+    *(queue->head) = new_value;
     queue->head++;
     if(queue->head == queue->end)
     {
@@ -57,7 +58,6 @@ jz_event_queue_push (jz_event_queue *queue, jerry_value_t new_value)
         //fatal: overflow
         printk("jz_event_queue_push fatal error: overflow\n");
     }
-    *(queue->head) = new_value;
 }
 
 jerry_value_t
