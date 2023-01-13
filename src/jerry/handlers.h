@@ -1,7 +1,6 @@
 #ifndef _JERRY_HANDLERS_H_
 #define _JERRY_HANDLERS_H_
 
-#include <zephyr/zephyr.h>
 #include "jerryscript.h"
 
 #include "jerryscript-ext/handlers.h"
