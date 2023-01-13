@@ -29,6 +29,7 @@ jz_timeout_new (jz_timeout_list_entry *timeout_list,
     } 
     //fatal: no free slots
     printk("jz_timeout_new fatal error: no free slots\n");
+    k_fatal_halt(EOVERFLOW);
 }
 
 void

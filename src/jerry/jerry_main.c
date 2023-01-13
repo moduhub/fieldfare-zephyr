@@ -66,9 +66,10 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
         jerry_value_t tTime = arguments[1];
         uint32_t cTime = jerry_value_as_uint32 (tTime);
         jz_timeout_new(timeout_list_ptr, cTime, 0, tCallback);
-        jerry_value_free(tTime);        
+        jerry_value_free(tTime);
     } else {
-        //throw
+        printk("jz_timeout_handlere error: invalid arguments");
+        k_fatal_halt(EINVAL);
     }
 
 	return jerry_undefined();
