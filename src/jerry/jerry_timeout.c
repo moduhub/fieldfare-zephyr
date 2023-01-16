@@ -19,7 +19,6 @@ jz_timeout_new (jz_timeout_list_entry *timeout_list,
     {
         if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED) == 0)
         {
-            printk("New timeout created: callback=%d ms_time=%d\n", callback, ms_time);
             timeout_list[i].elapsed = 0;
             timeout_list[i].trigger = ms_time;
             timeout_list[i].callback = callback;
@@ -59,11 +58,13 @@ jz_generate_timeout_events( jz_timeout_list_entry *timeout_list,
         if (utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED)
         && timeout_list[i].elapsed >= timeout_list[i].trigger)
         {
-            jz_event_queue_push (event_queue, timeout_list[i].callback);
+            jerry_value_t tCallbackReference = jerry_value_copy(timeout_list[i].callback);
+            jz_event_queue_push (event_queue, tCallbackReference);
             if(utils_check_flag(timeout_list[i].options, JZ_TIMEOUT_OPTION_PERIODIC) == 0)
             {
                 utils_clear_flag(&timeout_list[i].options, JZ_TIMEOUT_OPTION_ENABLED);
                 jerry_value_free(timeout_list[i].callback);
+                timeout_list[i].callback = 0;
             }
             timeout_list[i].elapsed = 0;
         }

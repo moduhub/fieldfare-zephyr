@@ -26,7 +26,7 @@ int jz_load_user_code (void)
         var count = 0;\
         setTimeout(() => {\
             print('timeout!');\
-        }, 1000);\
+        }, 3000);\
         while (count < 3) {\
             print('js count: ' + count);\
             count++;\
@@ -62,11 +62,9 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
 				    const jerry_length_t arguments_count)
 {	
 	if(arguments_count == 2) {
-        jerry_value_t tCallback = arguments[0];
-        jerry_value_t tTime = arguments[1];
-        uint32_t cTime = jerry_value_as_uint32 (tTime);
-        jz_timeout_new(timeout_list_ptr, cTime, 0, tCallback);
-        jerry_value_free(tTime);
+        jerry_value_t tCallbackReference = jerry_value_copy(arguments[0]);
+        uint32_t cTime = jerry_value_as_uint32 (arguments[1]);
+        jz_timeout_new(timeout_list_ptr, cTime, 0, tCallbackReference);
     } else {
         printk("jz_timeout_handlere error: invalid arguments");
         k_fatal_halt(EINVAL);
@@ -102,22 +100,18 @@ void jz_main (void *v1, void *v2, void *v3)
     jz_load_user_code();
     while (1)
     {
-        jz_timeout_update(timeout_list, 10);
+        jz_timeout_update(timeout_list, 100);
         jz_generate_timeout_events(timeout_list, &event_queue);
         if (jz_event_queue_num_entries(&event_queue) > 0)
         {
             printk(">>event queue pop\n");
             jerry_value_t tNextCall = jz_event_queue_pop(&event_queue);
-            printk(">>event call: %d\n", tNextCall);
             jerry_value_t tRetValue = jerry_call(tNextCall, jerry_undefined(), NULL, 0);
-            printk(">>free values\n");
             jerry_value_free(tRetValue);
             jerry_value_free(tNextCall);
-            printk(">>event end\n");
         }
         else
         {
-            printk("js thread idle...\n");
             k_sleep(K_MSEC(100));
         }
     }
