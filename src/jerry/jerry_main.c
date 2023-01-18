@@ -11,17 +11,6 @@ jz_timeout_list_entry *timeout_list_ptr;
 
 int jz_load_user_code (void)
 {
-	// const jerry_char_t script[] = "print('Hello from JavaScript');\
-    //     var count = 0;\
-    //     while (count < 3) {\
-    //         setTimeout(() => {\
-    //             print('timeout ' + count + ' called');\
-    //         }, count*1000);\
-    //         count++;\
-    //     }\
-	// 	print('script ended with count=' + count + '\n');\
-	// ";
-
     const jerry_char_t script[] = "print('Hello from JavaScript');\
         var count = 0;\
         setTimeout(() => {\
