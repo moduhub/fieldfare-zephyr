@@ -66,7 +66,7 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
         uint32_t cTime = jerry_value_as_uint32 (arguments[1]);
         jz_timeout_new(timeout_list_ptr, cTime, 0, tCallbackReference);
     } else {
-        printk("jz_timeout_handlere error: invalid arguments");
+        printk("jz_timeout_handler error: invalid arguments");
         k_fatal_halt(EINVAL);
     }
 
@@ -83,7 +83,6 @@ void jz_register_handlers()
 
 }
 
-
 void jz_main (void *v1, void *v2, void *v3)
 {
     jz_timeout_list_entry timeout_list[CONFIG_JZ_TIMEOUT_LIST_SIZE];
@@ -98,6 +97,7 @@ void jz_main (void *v1, void *v2, void *v3)
     jerry_init(JERRY_INIT_EMPTY);
     jz_register_handlers();
     jz_load_user_code();
+
     while (1)
     {
         jz_timeout_update(timeout_list, 100);
