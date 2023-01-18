@@ -15,8 +15,8 @@
 
 typedef struct  jz_timeout_list_entry_st {
     jerry_value_t callback;
-    uint32_t elapsed;
-    uint32_t trigger;
+    uint32_t ms_time;
+    uint64_t trigger;
     utils_flag_t options;
 } jz_timeout_list_entry;
 
@@ -28,10 +28,6 @@ jz_timeout_new (jz_timeout_list_entry *timeout_list,
                 uint32_t ms_time,
                 utils_flag_t options,
                 jerry_value_t callback);
-
-void
-jz_timeout_update(  jz_timeout_list_entry *timeout_list,
-                    int elapsed);
 
 void
 jz_generate_timeout_events( jz_timeout_list_entry *timeout_list,

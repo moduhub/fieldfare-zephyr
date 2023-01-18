@@ -25,12 +25,15 @@ int jz_load_user_code (void)
     const jerry_char_t script[] = "print('Hello from JavaScript');\
         var count = 0;\
         setTimeout(() => {\
-            print('timeout!');\
+            print('3 seconds timeout!');\
         }, 3000);\
-        while (count < 3) {\
+        while (count < 10) {\
             print('js count: ' + count);\
             count++;\
         }\
+        setTimeout(() => {\
+            print('10 seconds timeout!');\
+        }, 10000);\
 	";
 
 	const jerry_length_t script_size = sizeof (script) - 1;
@@ -100,7 +103,6 @@ void jz_main (void *v1, void *v2, void *v3)
 
     while (1)
     {
-        jz_timeout_update(timeout_list, 100);
         jz_generate_timeout_events(timeout_list, &event_queue);
         if (jz_event_queue_num_entries(&event_queue) > 0)
         {
@@ -112,7 +114,7 @@ void jz_main (void *v1, void *v2, void *v3)
         }
         else
         {
-            k_sleep(K_MSEC(100));
+            k_sleep(K_MSEC(10));
         }
     }
 	jerry_cleanup();
