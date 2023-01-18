@@ -114,7 +114,7 @@ int jz_load_user_code (void)
     jerry_parse_options_t parse_options;
     parse_options.options = JERRY_PARSE_HAS_SOURCE_NAME;
     parse_options.source_name = jerry_string_sz (".snapshot");
-	jerry_value_t parsed_code = jerry_parse (script, script_size, NULL);
+	jerry_value_t parsed_code = jerry_parse (script, script_size, &parse_options);
     jerry_value_free (parse_options.source_name);
 	if (!jerry_value_is_exception (parsed_code))
 	{
