@@ -57,6 +57,7 @@ jz_event_queue_push (jz_event_queue *queue, jerry_value_t new_value)
     {
         //fatal: overflow
         printk("jz_event_queue_push fatal error: overflow\n");
+        k_fatal_halt(ENOBUFS);
     }
 }
 
@@ -67,6 +68,7 @@ jz_event_queue_pop (jz_event_queue *queue)
     {
         //fatal: underflow
         printk("jz_event_queue_pop fatal error: underflow\n");
+        k_fatal_halt(ENODATA);
     }
     jerry_value_t tLastValue = *(queue->tail);
     queue->tail++;
