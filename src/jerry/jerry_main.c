@@ -23,6 +23,9 @@ int jz_load_user_code (void)
         setTimeout(() => {\
             print('10 seconds timeout!');\
         }, 10000);\
+        setInterval(() => {\
+            print('5 seconds interval');\
+        }, 5000);\
 	";
 
 	const jerry_length_t script_size = sizeof (script) - 1;
@@ -65,6 +68,23 @@ jz_timeout_handler( const jerry_call_info_t *call_info_p,
 	return jerry_undefined();
 }
 
+jerry_value_t
+jz_interval_handler( const jerry_call_info_t *call_info_p,
+				    const jerry_value_t arguments[],
+				    const jerry_length_t arguments_count)
+{	
+	if(arguments_count == 2) {
+        jerry_value_t tCallbackReference = jerry_value_copy(arguments[0]);
+        uint32_t cTime = jerry_value_as_uint32 (arguments[1]);
+        jz_timeout_new(timeout_list_ptr, cTime, JZ_TIMEOUT_OPTION_PERIODIC, tCallbackReference);
+    } else {
+        printk("jz_timeout_handler error: invalid arguments");
+        k_fatal_halt(EINVAL);
+    }
+
+	return jerry_undefined();
+}
+
 void jz_register_handlers()
 {
 
@@ -72,6 +92,7 @@ void jz_register_handlers()
     //jerryx_register_global("fs_init", fs_init_handler);
 
     jerryx_register_global ("setTimeout", jz_timeout_handler);
+    jerryx_register_global ("setInterval", jz_interval_handler);
 
 }
 
