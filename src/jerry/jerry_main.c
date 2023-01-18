@@ -14,13 +14,12 @@ jz_backtrace_handler (  const jerry_call_info_t *call_info_p,
                         const jerry_value_t args_p[],
                         const jerry_length_t args_count)
 {   
-    if (!jerry_feature_enabled (JERRY_FEATURE_LINE_INFO))
+    if (!jerry_feature_enabled (JERRY_FEATURE_LINE_INFO)) {
         printk("JERRY_FEATURE_LINE_INFO is disabled, no backtrace information available.\n");
     } else {
         printk("backtrace start ---------\n");
         jerry_value_t backtrace_array = jerry_backtrace (5);
         uint32_t array_length = jerry_array_length (backtrace_array);
-        printk("jz_print_backtrace array_length=%d", array_length);
         for (uint32_t idx = 0; idx < array_length; idx++)
         {
             jerry_value_t property = jerry_object_get_index (backtrace_array, idx);
