@@ -39,6 +39,50 @@ jz_backtrace_handler (  const jerry_call_info_t *call_info_p,
     return jerry_undefined();
 }
 
+void
+jz_print_exception_info(jerry_value_t exception)
+{
+    jerry_value_t error_value = jerry_exception_value (exception, false);
+    switch (jerry_error_type (error_value))
+    {
+        case JERRY_ERROR_NONE:
+            printk("Exception value is not an error.\n");
+            break;
+
+        case JERRY_ERROR_COMMON:
+            printk("JERRY_ERROR_COMMON\n");
+            break;
+
+        case JERRY_ERROR_EVAL:
+            printk("JERRY_ERROR_EVAL\n");
+            break;
+
+        case JERRY_ERROR_RANGE:
+            printk("JERRY_ERROR_RANGE\n");
+            break;
+
+        case JERRY_ERROR_REFERENCE:
+            printk("JERRY_ERROR_REFERENCE\n");
+            break;
+
+        case JERRY_ERROR_SYNTAX:
+            printk("JERRY_ERROR_SYNTAX\n");
+            break;
+
+        case JERRY_ERROR_TYPE:
+            printk("JERRY_ERROR_COMMON\n");
+            break;
+
+        case JERRY_ERROR_URI:
+            printk("JERRY_ERROR_URI\n");
+            break;
+ 
+        default:
+            printk("Unexpected error type.\n");
+    }
+    jerry_value_free (error_value);
+}
+
 int jz_load_user_code (void)
 {
     const jerry_char_t script[] = "print('Hello from JavaScript');\
@@ -75,19 +119,18 @@ int jz_load_user_code (void)
     jerry_value_free (parse_options.source_name);
 	if (!jerry_value_is_exception (parsed_code))
 	{
-		/* Execute the parsed source code in the Global scope */
-		printk("Parsed code is not an exception!\n");
+		printk("Code parsed successfully\n");
 		jerry_value_t ret_value = jerry_run (parsed_code);
-
-		/* Returned value must be freed */
+        if(jerry_value_is_exception(ret_value))
+        {
+            printk("--- ERROR: User code execution exception.\n");
+            jz_print_exception_info(ret_value);
+        }
 		jerry_value_free (ret_value);
 	} else {
-		printk("--- ERROR: Parsed code is an exception!\n");
+		printk("--- ERROR: an exception ocurred during code parsing\n");
 	}
-
-	/* Parsed source code must be freed */
 	jerry_value_free (parsed_code);
-
 	return 0;
 }
 
@@ -158,10 +201,15 @@ void jz_main (void *v1, void *v2, void *v3)
         if (jz_event_queue_num_entries(&event_queue) > 0)
         {
             printk(">>event queue pop\n");
-            jerry_value_t tNextCall = jz_event_queue_pop(&event_queue);
-            jerry_value_t tRetValue = jerry_call(tNextCall, jerry_undefined(), NULL, 0);
-            jerry_value_free(tRetValue);
-            jerry_value_free(tNextCall);
+            jerry_value_t event_callback = jz_event_queue_pop(&event_queue);
+            jerry_value_t ret_value = jerry_call(event_callback, jerry_undefined(), NULL, 0);
+            if(jerry_value_is_exception(ret_value))
+            {
+                printk("--- ERROR: Event code execution exception.\n");
+                jz_print_exception_info(ret_value);
+            }
+            jerry_value_free(ret_value);
+            jerry_value_free(event_callback);
         }
         else
         {
